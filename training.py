@@ -1,7 +1,8 @@
-import tensorflow as tf
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.models import Sequential
 import matplotlib.pyplot as plt
+import tensorflow as tf
 import numpy as np
 import os
 
@@ -24,14 +25,14 @@ def load_imgs():
             directory=train_dir,
             target_size=(IMG_HEIGHT, IMG_WIDTH),
             shuffle=True,
-            batch_size=128,
+            batch_size=32,
             subset='training')
     
     validation_generator = train_datagen.flow_from_directory(
             directory=train_dir,
             target_size=(IMG_HEIGHT, IMG_WIDTH),
             shuffle=True,
-            batch_size=128,
+            batch_size=32,
             subset='validation')
 
     return train_generator, validation_generator
@@ -53,33 +54,42 @@ def plot_train_charts(history):
 
 IMG_HEIGHT = 28
 IMG_WIDTH = 28
-EPOCHS = 30
+EPOCHS = 50
 
 train_gen, val_gen = load_imgs()
 sample_training_images, _ = next(train_gen)
 
-Adam = tf.keras.optimizers.Adam(learning_rate=0.005)
+Adam = tf.keras.optimizers.Adam(learning_rate=1e-3)
+early_stopping1 = EarlyStopping(monitor='loss', mode='min', verbose=2, patience=5)
+early_stopping2 = EarlyStopping(monitor='val_loss', mode='min', verbose=2, patience=10)
+best_model1 = ModelCheckpoint('traffic_classifier_v.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
+best_model2 = ModelCheckpoint('traffic_classifier_a.h5', monitor='accuracy', mode='max', verbose=1, save_best_only=True)
 
-model = Sequential([
-    tf.keras.layers.Conv2D(16, 3, activation='relu', input_shape=(IMG_HEIGHT, IMG_WIDTH, 3)),
-    tf.keras.layers.Dropout(0.25),
-    tf.keras.layers.MaxPool2D(),
-    tf.keras.layers.Conv2D(32, 3, activation='relu'),
-    tf.keras.layers.Dropout(0.25),
-    tf.keras.layers.MaxPool2D(),
-    tf.keras.layers.Conv2D(64, 3, activation='relu'),
-    tf.keras.layers.Dropout(0.25),
-    tf.keras.layers.MaxPool2D(),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(512, activation='relu'),
-    tf.keras.layers.Dropout(0.25),
-    tf.keras.layers.Dense(43, activation='softmax')
-])
+model = Sequential()
+model.add(tf.keras.layers.Conv2D(16, (3, 3), activation='relu', input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)))
+model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal'))
+model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal'))
+model.add(tf.keras.layers.MaxPooling2D((2, 2)))
+model.add(tf.keras.layers.Flatten())
+model.add(tf.keras.layers.Dense(1024, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(256, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(128, activation='relu'))
+model.add(tf.keras.layers.Dropout(0.5))
+model.add(tf.keras.layers.Dense(43, activation='softmax'))
 
 model.compile(loss='categorical_crossentropy', optimizer=Adam, metrics=['accuracy'])
-history = model.fit(train_gen, epochs=EPOCHS, validation_data=val_gen)
+history = model.fit(train_gen, 
+                    epochs=EPOCHS, 
+                    validation_data=val_gen, 
+                    callbacks=[early_stopping1, 
+                               early_stopping2, 
+                               best_model1, 
+                               best_model2]
+                    )
 
 plot_train_charts(history)
-
-model.save('traffic_classifier.h5')
 
