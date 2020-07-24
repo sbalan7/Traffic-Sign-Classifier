@@ -46,7 +46,6 @@ def plot_sample(rows, cols):
         ax.set_title(classes[sel+1], fontsize=6)
     plt.show()
 
-        
 
 classes = { 
     1:'Speed limit (20km/h)',
