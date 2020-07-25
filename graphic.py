@@ -1,28 +1,36 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QToolTip
-from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QMainWindow, QAction, qApp, QApplication
+from PyQt5.QtGui import QIcon
 import sys
 
-class Example(QWidget):
+
+class Example(QMainWindow):
 
     def __init__(self):
         super().__init__()
 
         self.initUI()
 
-
     def initUI(self):
 
-        QToolTip.setFont(QFont('SansSerif', 10))
+        openAct = QAction(QIcon('open.png'), '&Open', self)
+        openAct.setShortcut('Ctrl+O')
+        openAct.setStatusTip('Open File')
+        openAct.triggered.connect(qApp.quit)
+        
+        exitAct = QAction(QIcon('exit.png'), '&Exit', self)
+        exitAct.setShortcut('Ctrl+Q')
+        exitAct.setStatusTip('Exit application')
+        exitAct.triggered.connect(qApp.quit)
 
-        self.setToolTip('This is a <b>QWidget</b> widget')
+        self.statusBar()
 
-        btn = QPushButton('Button', self)
-        btn.setToolTip('This is a <b>QPushButton</b> widget')
-        btn.resize(btn.sizeHint())
-        btn.move(50, 50)
+        menubar = self.menuBar()
+        fileMenu = menubar.addMenu('&File')
+        fileMenu.addAction(openAct)
+        fileMenu.addAction(exitAct)
 
         self.setGeometry(300, 300, 300, 200)
-        self.setWindowTitle('Tooltips')
+        self.setWindowTitle('LOL')
         self.show()
 
 
