@@ -26,7 +26,7 @@ def count_classes():
         tick.label.set_rotation('vertical')
     plt.show()
 
-def plot_sample(rows, cols):
+def plot_sample(rows=2, cols=5):
     train_dir_path = 'C:\\Users\\sbala\\Google Drive\\Datasets\\Traffic_Signs\\Train'
     train_dir = os.listdir(train_dir_path)
     selection = np.random.randint(0, 43, rows*cols)
