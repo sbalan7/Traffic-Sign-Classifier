@@ -80,7 +80,7 @@ classes = ['20 km/h', '30 km/h', '50 km/h', '60 km/h', '70 km/h', '80 km/h', '80
            'Take right', 'Take left', 'Circle crossroad', 'End of overtaking limit', 'End of overtaking limit for track']
 
 app = QApplication(sys.argv)
-model = load_model('traffic_classifier_v.h5')
+model = load_model('traffic_classifier.h5')
 gui = tscGUI()
 sys.exit(app.exec_())
 

@@ -1,49 +1,76 @@
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.models import Sequential
+from keras.layers import Conv2D, MaxPool2D, Dense, Flatten, Dropout
+from keras.utils import to_categorical
+from keras.models import Sequential
+from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import numpy as np
+from PIL import Image
+import pandas as pd 
+import numpy as np 
+import cv2
 import os
 
 
-def load_imgs():
-    root = './'
-    train_dir = os.path.join(root, 'Train')
-    train_datagen = ImageDataGenerator(rescale=1./255, 
-                                       brightness_range=(0.8, 1.1), 
-                                       rotation_range=10,
-                                       width_shift_range=0.1,
-                                       height_shift_range=0.1,
-                                       shear_range=0.15,
-                                       horizontal_flip=False,
-                                       vertical_flip=False,
-                                       fill_mode='nearest',
-                                       validation_split=0.1)
+def load_images():
+    data = []
+    labels = []
 
-    train_generator = train_datagen.flow_from_directory(
-            directory=train_dir,
-            target_size=(IMG_HEIGHT, IMG_WIDTH),
-            shuffle=True,
-            batch_size=32,
-            subset='training')
+    for i in range(classes) :
+        path = "./train/{0}/".format(i)
+
+        for img in os.listdir(path):
+            try:
+                image = cv2.imread(path+img)
+                image = Image.fromarray(image, 'RGB')
+                image = image.resize((height, width))
+                data.append(np.array(image))
+                labels.append(i)
+            except AttributeError:
+                print(" ")
+                
+    data = np.array(data)
+    labels = np.array(labels)
+
+    print('Images Loaded')
+    return data, labels
+
+def preprocess_data(X, y):
+    X_train, X_valid, y_train, y_valid = train_test_split(X, y, test_size=0.2)
+
+    y_train = to_categorical(y_train, 43)
+    y_valid = to_categorical(y_valid, 43)
+
+    X_train = X_train.astype('float32') / 255 
+    X_valid = X_valid.astype('float32') / 255
+
+    print('Processed Data')
+    return X_train, X_valid, y_train, y_valid
+
+def calculate_weights():
+    no_obj = []
+    paths = []
     
-    validation_generator = train_datagen.flow_from_directory(
-            directory=train_dir,
-            target_size=(IMG_HEIGHT, IMG_WIDTH),
-            shuffle=True,
-            batch_size=32,
-            subset='validation')
+    train_dir = os.path.join(root, 'Train')
 
-    return train_generator, validation_generator
+    for i in range(classes):
+        curr = "./train/{0}/".format(i)
+        no_obj.append(len(os.listdir(curr)))
+        paths.append(int(i))
+
+    no_obj = np.array(no_obj)
+    weights = np.max(no_obj) / no_obj
+
+    return dict(zip(paths, weights))
 
 def plot_train_charts(history):
     fig = plt.subplots(figsize=(10, 4))
+
     plt.subplot(121)
     plt.title('Accuracy')
     plt.plot(history.history['accuracy'], label='Train')
     plt.plot(history.history['val_accuracy'], label='Valid')
     plt.legend()
+    
     plt.subplot(122)
     plt.title('Loss')
     plt.plot(history.history['loss'], label='Train')
@@ -51,45 +78,36 @@ def plot_train_charts(history):
     plt.legend()
     plt.show()
 
+height = 30
+width = 30
+channels = 3
+classes = 43
+epochs = 20
 
-IMG_HEIGHT = 28
-IMG_WIDTH = 28
-EPOCHS = 50
+X, y = load_images()
+X_train, X_valid, y_train, y_valid = preprocess_data(X, y)
 
-train_gen, val_gen = load_imgs()
-sample_training_images, _ = next(train_gen)
-
-Adam = tf.keras.optimizers.Adam(learning_rate=1e-3)
-early_stopping1 = EarlyStopping(monitor='loss', mode='min', verbose=2, patience=5)
-early_stopping2 = EarlyStopping(monitor='val_loss', mode='min', verbose=2, patience=10)
-best_model1 = ModelCheckpoint('traffic_classifier_v.h5', monitor='val_accuracy', mode='max', verbose=1, save_best_only=True)
-best_model2 = ModelCheckpoint('traffic_classifier_a.h5', monitor='accuracy', mode='max', verbose=1, save_best_only=True)
+weights = calculate_weights()
 
 model = Sequential()
-model.add(tf.keras.layers.Conv2D(16, (3, 3), activation='relu', input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)))
-model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-model.add(tf.keras.layers.Conv2D(32, (3, 3), activation='relu', kernel_initializer='he_normal'))
-model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-model.add(tf.keras.layers.Conv2D(64, (3, 3), activation='relu', kernel_initializer='he_normal'))
-model.add(tf.keras.layers.MaxPooling2D((2, 2)))
-model.add(tf.keras.layers.Flatten())
-model.add(tf.keras.layers.Dense(1024, activation='relu'))
-model.add(tf.keras.layers.Dropout(0.5))
-model.add(tf.keras.layers.Dense(256, activation='relu'))
-model.add(tf.keras.layers.Dropout(0.5))
-model.add(tf.keras.layers.Dense(128, activation='relu'))
-model.add(tf.keras.layers.Dropout(0.5))
-model.add(tf.keras.layers.Dense(43, activation='softmax'))
+model.add(Conv2D(filters=16, kernel_size=(3, 3), activation='relu', input_shape=X_train.shape[1:]))
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Conv2D(filters=32, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Conv2D(filters=64, kernel_size=(3, 3), activation='relu'))
+model.add(MaxPool2D(pool_size=(2, 2)))
+model.add(Flatten())
+model.add(Dense(1024, activation='relu'))
+model.add(Dropout(rate=0.5))
+model.add(Dense(43, activation='softmax'))
 
-model.compile(loss='categorical_crossentropy', optimizer=Adam, metrics=['accuracy'])
-history = model.fit(train_gen, 
-                    epochs=EPOCHS, 
-                    validation_data=val_gen, 
-                    callbacks=[early_stopping1, 
-                               early_stopping2, 
-                               best_model1, 
-                               best_model2]
-                    )
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+history = model.fit(X_train, y_train, 
+                    batch_size=32, 
+                    epochs=epochs, 
+                    class_weight=weights, 
+                    validation_data=(X_valid, y_valid))
 
 plot_train_charts(history)
-
+model.save('traffic_classifier.h5')
