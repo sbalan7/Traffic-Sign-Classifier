@@ -4,7 +4,7 @@ import os
 
 
 def count_classes():
-    train_dir_path = 'C:\\Users\\sbala\\Google Drive\\Datasets\\Traffic_Signs\\Train'
+    train_dir_path = './Train'
     train_dir = os.listdir(train_dir_path)
     no_obj = []
 
@@ -27,7 +27,7 @@ def count_classes():
     plt.show()
 
 def plot_sample(rows=2, cols=5):
-    train_dir_path = 'C:\\Users\\sbala\\Google Drive\\Datasets\\Traffic_Signs\\Train'
+    train_dir_path = './Train'
     train_dir = os.listdir(train_dir_path)
     selection = np.random.randint(0, 43, rows*cols)
     

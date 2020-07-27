@@ -1,6 +1,6 @@
 # Traffic-Sign-Classifier
 
-The [German Traffic Sign Recognition Benchmark](https://www.kaggle.com/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign) dataset on kaggle is a popular multi-class classification dataset on Kaggle. Traffic sign data was collected and is to be classified into 43 different classes. The data visualizations can be found in the `visualization.py` file. A small sample of the dataset is shown below.
+The [German Traffic Sign Recognition Benchmark](https://www.kaggle.com/meowmeowmeowmeowmeow/gtsrb-german-traffic-sign) dataset on kaggle is a popular multi-class classification dataset on Kaggle. Traffic sign data was collected and is to be classified into 43 different classes. The data visualizations can be found in the `visualization.py` file. A small sample of the dataset is shown below. The dataset is diverse, including images which have low contrast, which even humans may find difficult to classify. Some images are shaky, and some are blurred.
 
 ![Dataset Sample Images](https://raw.githubusercontent.com/sbalan7/Traffic-Sign-Classifier/master/Images/sample.png)
 
