@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import (qApp, QLabel, QFrame, QAction, QWidget, QTextEdit, QGridLayout,
                              QPushButton, QMainWindow, QApplication, QFileDialog)
-from PyQt5.QtGui import QIcon, QPixmap, QColor, QPalette
+from PyQt5.QtGui import QIcon, QPixmap
 from tensorflow.keras.models import load_model
 from PIL import Image
 import numpy as np
